@@ -1,0 +1,119 @@
+CREATE TABLE IF NOT EXISTS sys_user (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(100) NOT NULL,
+  real_name VARCHAR(50) NOT NULL,
+  phone VARCHAR(30),
+  role VARCHAR(20) NOT NULL DEFAULT 'ARTISAN',
+  enabled TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS craft_category (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(80) NOT NULL UNIQUE,
+  description VARCHAR(500),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS artisan_profile (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT,
+  name VARCHAR(50) NOT NULL,
+  gender VARCHAR(10),
+  birth_year INT,
+  phone VARCHAR(30),
+  region VARCHAR(100),
+  category_id BIGINT,
+  experience_years INT DEFAULT 0,
+  skill_description TEXT,
+  honors TEXT,
+  inheritance_story TEXT,
+  avatar_url VARCHAR(500),
+  status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+  reject_reason VARCHAR(500),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_artisan_category FOREIGN KEY (category_id) REFERENCES craft_category(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS artisan_work (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  artisan_id BIGINT NOT NULL,
+  title VARCHAR(120) NOT NULL,
+  description TEXT,
+  image_url VARCHAR(500),
+  price DECIMAL(10,2) DEFAULT 0,
+  status VARCHAR(20) NOT NULL DEFAULT 'DISPLAY',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_work_artisan FOREIGN KEY (artisan_id) REFERENCES artisan_profile(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS archive_review (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  artisan_id BIGINT NOT NULL,
+  reviewer_id BIGINT,
+  action VARCHAR(20) NOT NULL,
+  comment VARCHAR(500),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_review_artisan FOREIGN KEY (artisan_id) REFERENCES artisan_profile(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS announcement (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(150) NOT NULL,
+  content TEXT NOT NULL,
+  publisher VARCHAR(50),
+  published TINYINT NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS operation_log (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  operator_id BIGINT,
+  operator_name VARCHAR(50) NOT NULL,
+  module_name VARCHAR(80) NOT NULL,
+  operation_type VARCHAR(30) NOT NULL,
+  target_id BIGINT,
+  operation_detail VARCHAR(500),
+  result_status VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_operation_user FOREIGN KEY (operator_id) REFERENCES sys_user(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS heritage_auction (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  work_id BIGINT NOT NULL,
+  seller_id BIGINT,
+  seller_name VARCHAR(80) NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  cover_url VARCHAR(500),
+  description TEXT,
+  start_price DECIMAL(12,2) NOT NULL,
+  current_price DECIMAL(12,2) NOT NULL,
+  min_increment DECIMAL(12,2) NOT NULL,
+  start_time DATETIME NOT NULL,
+  end_time DATETIME NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+  bid_count INT NOT NULL DEFAULT 0,
+  winner_id BIGINT,
+  winner_name VARCHAR(80),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_auction_status_time (status, start_time, end_time),
+  CONSTRAINT fk_auction_work FOREIGN KEY (work_id) REFERENCES artisan_work(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_auction_seller FOREIGN KEY (seller_id) REFERENCES sys_user(id) ON DELETE SET NULL,
+  CONSTRAINT fk_auction_winner FOREIGN KEY (winner_id) REFERENCES sys_user(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS auction_bid (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  auction_id BIGINT NOT NULL,
+  bidder_id BIGINT,
+  bidder_name VARCHAR(80) NOT NULL,
+  bid_amount DECIMAL(12,2) NOT NULL,
+  bid_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_bid_auction_time (auction_id, bid_time),
+  CONSTRAINT fk_bid_auction FOREIGN KEY (auction_id) REFERENCES heritage_auction(id) ON DELETE CASCADE,
+  CONSTRAINT fk_bid_user FOREIGN KEY (bidder_id) REFERENCES sys_user(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

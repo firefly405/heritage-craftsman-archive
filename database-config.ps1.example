@@ -1,0 +1,7 @@
+# Copy to database-config.ps1 and replace with your local settings.
+$env:DB_URL='jdbc:mysql://127.0.0.1:3307/heritage_archive?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false'
+$env:DB_USERNAME='your_database_username'
+$env:DB_PASSWORD='your_database_password'
+# First startup only. Prefer the secure prompt in start.ps1 instead of saving a password here.
+# $env:INITIAL_ADMIN_USERNAME='admin'
+
